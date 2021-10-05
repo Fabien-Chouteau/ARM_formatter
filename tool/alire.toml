@@ -1,0 +1,11 @@
+name = "arm_formatter"
+description = "Ada Reference Manual Formatting Tool"
+version = "0.1.0"
+
+authors = ["AXE Consultants"]
+licenses = "GPL-3.0-only"
+
+maintainers = ["Fabien Chouteau <fabien.chouteau@gmail.com>"]
+maintainers-logins = ["Fabien-Chouteau"]
+
+executables = ["arm_formatter"]
