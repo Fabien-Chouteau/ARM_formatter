@@ -2,7 +2,8 @@ with Ada.Text_IO,
      Ada.Strings.Fixed,
      Ada.Strings.Unbounded,
      Ada.Characters.Handling,
-     Ada.Command_Line;
+     Ada.Command_Line,
+     Ada.Unchecked_Deallocation;
 procedure Rtf2Form is
 
     --
