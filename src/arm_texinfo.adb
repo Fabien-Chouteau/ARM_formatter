@@ -24,18 +24,17 @@ package body ARM_Texinfo is
    -- Ancient  - S L - Developed package as add-on to Arm_Form.
    -- 10/19/11 - RLB - Integrated outside-developed package into Arm_Form.
    --                  Commented out/replaced Ada 2005 features (this is
-   --		       Ada 95 code). Updated for a few other changes since
-   --		       the last update.
+   --                  Ada 95 code). Updated for a few other changes since
+   --                  the last update.
    -- 10/25/11 - RLB - Added old insertion version to Revised_Clause_Header.
    --  4/ 1/12 - S L - Implemented remaining Texinfo implementation.
    --  4/22/12 - S L - Move @dircategory, @direntry before first @node.
    --  4/28/12 - S L - Add @w{} after @anchor; otherwise following whitespace
-   --		       is dropped.
+   --                  is dropped.
    --  8/31/12 - RLB - Added Output_Path.
    -- 10/18/12 - RLB - Added additional hanging styles.
    -- 11/26/12 - RLB - Added subdivision names to Clause_Header and
-   --		       Revised_Clause_Header.
-
+   --                  Revised_Clause_Header.
 
    use Ada.Text_IO;
 
@@ -51,36 +50,34 @@ package body ARM_Texinfo is
    ----------
    --  local subprograms
 
-   procedure Check_Not_In_Paragraph (Output_Object : in Texinfo_Output_Type)
-   is begin
+   procedure Check_Not_In_Paragraph (Output_Object : in Texinfo_Output_Type) is
+   begin
       if Output_Object.In_Paragraph then
          Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "In paragraph");
+           (ARM_Output.Not_Valid_Error'Identity, "In paragraph");
       end if;
    end Check_Not_In_Paragraph;
 
-   procedure Check_Valid (Output_Object : in Texinfo_Output_Type)
-   is begin
+   procedure Check_Valid (Output_Object : in Texinfo_Output_Type) is
+   begin
       if not Output_Object.Is_Valid then
          Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Not valid object");
+           (ARM_Output.Not_Valid_Error'Identity, "Not valid object");
       end if;
    end Check_Valid;
 
-   procedure Unexpected_State (Output_Object : in Texinfo_Output_Type)
-   is begin
+   procedure Unexpected_State (Output_Object : in Texinfo_Output_Type) is
+   begin
       Ada.Exceptions.Raise_Exception
         (ARM_Output.Not_Valid_Error'Identity,
          "Unexpected state: " & State_Type'Image (Output_Object.State));
    end Unexpected_State;
 
    procedure Escape_Put
-     (Output_Object  : in Texinfo_Output_Type;
-      Char           : in Character;
-      Preserve_Space : in Boolean             := False)
-   is begin
+     (Output_Object  : in Texinfo_Output_Type; Char : in Character;
+      Preserve_Space : in Boolean := False)
+   is
+   begin
       --  Escape special chars
       if Char = '@' then
          Put (Output_Object.File, "@@");
@@ -108,48 +105,44 @@ package body ARM_Texinfo is
    end Escape_Put;
 
    procedure Escape_Put
-     (Output_Object  : in Texinfo_Output_Type;
-      Text           : in String;
-      Preserve_Space : in Boolean             := False)
-   is begin
+     (Output_Object  : in Texinfo_Output_Type; Text : in String;
+      Preserve_Space : in Boolean := False)
+   is
+   begin
       for I in Text'Range loop
          Escape_Put (Output_Object, Text (I), Preserve_Space);
       end loop;
    end Escape_Put;
 
-   procedure End_Title_Page (Output_Object : in out Texinfo_Output_Type)
-   is
+   procedure End_Title_Page (Output_Object : in out Texinfo_Output_Type) is
       use ARM_Contents;
 
       procedure Put_Top_Menu_Item
-        (Title         : in     Title_Type;
-         Level         : in     Level_Type;
-         Clause_Number : in     Clause_Number_Type;
-         Version       : in     ARM_Contents.Change_Version_Type;
-         Quit          :    out Boolean)
+        (Title         : in Title_Type; Level : in Level_Type;
+         Clause_Number : in Clause_Number_Type;
+         Version : in ARM_Contents.Change_Version_Type; Quit : out Boolean)
       is
-         pragma Unreferenced (Version); --  we are only concerned with version 2
+         pragma Unreferenced
+           (Version); --  we are only concerned with version 2
          First_Part : String (1 .. 14); --  Get all Titles aligned.
       begin
          Quit := False;
 
          case Level is
-         when Section | Normative_Annex | Informative_Annex | Plain_Annex =>
-            Ada.Strings.Fixed.Move
-              (Source =>
-                 "* " &
-                 Make_Clause_Number (Level, Clause_Number) &
-                 " ::",
-               Target => First_Part);
+            when Section | Normative_Annex | Informative_Annex | Plain_Annex =>
+               Ada.Strings.Fixed.Move
+                 (Source =>
+                    "* " & Make_Clause_Number (Level, Clause_Number) & " ::",
+                  Target => First_Part);
 
-            Put_Line (Output_Object.File, First_Part & Title);
+               Put_Line (Output_Object.File, First_Part & Title);
 
-         when Unnumbered_Section | Clause | Subclause | Subsubclause =>
-            null;
+            when Unnumbered_Section | Clause | Subclause | Subsubclause =>
+               null;
 
-	 when ARM_Contents.Dead_Clause  =>
-	    raise Program_Error with "Dead_Clause header??";
-		-- No headers for dead clauses.
+            when ARM_Contents.Dead_Clause =>
+               raise Program_Error with "Dead_Clause header??";
+               -- No headers for dead clauses.
 
          end case;
       end Put_Top_Menu_Item;
@@ -160,9 +153,12 @@ package body ARM_Texinfo is
       New_Line (Output_Object.File); --  Terminate unneeded "@center"
 
       Put_Line (Output_Object.File, "@menu");
-      Put_Line (Output_Object.File, "* Front Matter:: Copyright, Foreword, etc."); --  Not a section in ARM sources
+      Put_Line
+        (Output_Object.File,
+         "* Front Matter:: Copyright, Foreword, etc."); --  Not a section in ARM sources
       Put_Top_Menu;
-      Put_Line (Output_Object.File, "* Index ::    Index"); --  Not in ARM sources
+      Put_Line
+        (Output_Object.File, "* Index ::    Index"); --  Not in ARM sources
       Put_Line (Output_Object.File, "@end menu");
 
       -- @node current, next, prev, up
@@ -181,41 +177,50 @@ package body ARM_Texinfo is
       --
       --  "section" can be a number, a letter "N", or "Annex N", where
       --
-      --  'N' = Character'Val (Character'Pos('A') + (Section_Number - ANNEX_START)
+   --  'N' = Character'Val (Character'Pos('A') + (Section_Number - ANNEX_START)
 
-      Section_Dot : constant Natural := Ada.Strings.Fixed.Index (Source => Clause_String, Pattern => ".");
+      Section_Dot : constant Natural :=
+        Ada.Strings.Fixed.Index (Source => Clause_String, Pattern => ".");
 
-      Clause_Dot : constant Natural := Ada.Strings.Fixed.Index
-        (Source => Clause_String (Section_Dot + 1 .. Clause_String'Last),
-         Pattern => ".");
+      Clause_Dot : constant Natural :=
+        Ada.Strings.Fixed.Index
+          (Source  => Clause_String (Section_Dot + 1 .. Clause_String'Last),
+           Pattern => ".");
 
       use type ARM_Contents.Section_Number_Type;
    begin
       if Section_Dot = 8 then
          --  Section is "Annex N"
-         Section_Number := ARM_Contents.ANNEX_START +
-           Character'Pos (Clause_String (Clause_String'First + 6)) - Character'Pos ('A');
-      elsif Character'Pos (Clause_String (Clause_String'First)) >= Character'Pos ('A') then
+         Section_Number :=
+           ARM_Contents.ANNEX_START +
+           Character'Pos (Clause_String (Clause_String'First + 6)) -
+           Character'Pos ('A');
+      elsif Character'Pos (Clause_String (Clause_String'First)) >=
+        Character'Pos ('A')
+      then
          --  Section is letter.
-         Section_Number := ARM_Contents.ANNEX_START +
-           Character'Pos (Clause_String (Clause_String'First)) - Character'Pos ('A');
+         Section_Number :=
+           ARM_Contents.ANNEX_START +
+           Character'Pos (Clause_String (Clause_String'First)) -
+           Character'Pos ('A');
       else
-         Section_Number := ARM_Contents.Section_Number_Type'Value
-           (Clause_String (Clause_String'First .. Section_Dot - 1));
+         Section_Number :=
+           ARM_Contents.Section_Number_Type'Value
+             (Clause_String (Clause_String'First .. Section_Dot - 1));
       end if;
 
       if Clause_Dot = 0 then
-         Clause_Integer := Natural'Value
-           (Clause_String (Section_Dot + 1 .. Clause_String'Last));
+         Clause_Integer :=
+           Natural'Value
+             (Clause_String (Section_Dot + 1 .. Clause_String'Last));
       else
-         Clause_Integer := Natural'Value
-           (Clause_String (Section_Dot + 1 .. Clause_Dot - 1));
+         Clause_Integer :=
+           Natural'Value (Clause_String (Section_Dot + 1 .. Clause_Dot - 1));
       end if;
    end Get_Clause_Section;
 
    procedure Handle_Indent
-     (Output_Object : in Texinfo_Output_Type;
-      Texinfo_Item  : in String;
+     (Output_Object : in Texinfo_Output_Type; Texinfo_Item : in String;
       Extra_Indent  : in ARM_Output.Paragraph_Indent_Type := 0)
    is
       use type ARM_Output.Paragraph_Indent_Type;
@@ -225,47 +230,59 @@ package body ARM_Texinfo is
       end loop;
    end Handle_Indent;
 
-   procedure Add_To_Column_Item (Output_Object : in out Texinfo_Output_Type; Text : in String)
-   is begin
-      if Output_Object.Column_Text (Output_Object.Current_Column) = null or else
-        Output_Object.Column_Text (Output_Object.Current_Column).Row /= Output_Object.Current_Row
+   procedure Add_To_Column_Item
+     (Output_Object : in out Texinfo_Output_Type; Text : in String)
+   is
+   begin
+      if Output_Object.Column_Text (Output_Object.Current_Column) = null
+        or else Output_Object.Column_Text (Output_Object.Current_Column).Row /=
+          Output_Object.Current_Row
       then
          --  Start a new row.
          Output_Object.Column_Text (Output_Object.Current_Column) :=
            new Column_Text_Item_Type'
-           (Text   => (others => ' '),
-            Length => 0,
-            Row    => Output_Object.Current_Row,
-            Next   => Output_Object.Column_Text (Output_Object.Current_Column));
+             (Text => (others => ' '), Length => 0,
+              Row  => Output_Object.Current_Row,
+              Next =>
+                Output_Object.Column_Text (Output_Object.Current_Column));
       end if;
 
-      if Output_Object.Column_Text (Output_Object.Current_Column).Length + Text'Length >
+      if Output_Object.Column_Text (Output_Object.Current_Column).Length +
+        Text'Length >
         Output_Object.Column_Text (Output_Object.Current_Column).Text'Length
       then
          Ada.Exceptions.Raise_Exception
            (ARM_Output.Not_Valid_Error'Identity,
             "Column item full, but more text: " &
-              Output_Object.Column_Text (Output_Object.Current_Column).Text
-              (1 .. Output_Object.Column_Text (Output_Object.Current_Column).Length));
+            Output_Object.Column_Text (Output_Object.Current_Column).Text
+              (1 ..
+                   Output_Object.Column_Text (Output_Object.Current_Column)
+                     .Length));
       else
          declare
-            Current_Text : Column_Text_Item_Type renames Output_Object.Column_Text (Output_Object.Current_Column).all;
+            Current_Text : Column_Text_Item_Type renames
+              Output_Object.Column_Text (Output_Object.Current_Column).all;
          begin
-            Current_Text.Text (Current_Text.Length + 1 .. Current_Text.Length + Text'Length) := Text;
+            Current_Text.Text
+              (Current_Text.Length + 1 .. Current_Text.Length + Text'Length) :=
+              Text;
 
             Current_Text.Length := Current_Text.Length + Text'Length;
 
-            if Output_Object.Column_Widths (Output_Object.Current_Column) < Current_Text.Length then
-               Output_Object.Column_Widths (Output_Object.Current_Column) := Current_Text.Length;
+            if Output_Object.Column_Widths (Output_Object.Current_Column) <
+              Current_Text.Length
+            then
+               Output_Object.Column_Widths (Output_Object.Current_Column) :=
+                 Current_Text.Length;
             end if;
          end;
       end if;
    end Add_To_Column_Item;
 
    procedure Pad_Columns (Output_Object : in out Texinfo_Output_Type)
-   --  Ensure that all columns have the same number of (possibly
-   --  empty) rows, for table headers.
-   is
+      --  Ensure that all columns have the same number of (possibly
+      --  empty) rows, for table headers.
+      is
       Item          : Column_Text_Ptr;
       First_New_Row : Natural;
    begin
@@ -280,30 +297,26 @@ package body ARM_Texinfo is
          for I in First_New_Row .. Output_Object.Max_Row loop
             Output_Object.Column_Text (Col) :=
               new Column_Text_Item_Type'
-              (Text   => (others => ' '),
-               Length => 1,
-               Row    => I,
-               Next   => Output_Object.Column_Text (Col));
+                (Text => (others => ' '), Length => 1, Row => I,
+                 Next => Output_Object.Column_Text (Col));
          end loop;
       end loop;
    end Pad_Columns;
 
    procedure Output_Column_Widths (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   is
+   begin
       New_Line (Output_Object.File);
       Put (Output_Object.File, "@multitable ");
       for I in 1 .. Output_Object.Column_Count loop
          Put
            (Output_Object.File,
-            " {" &
-              String'(1 .. Output_Object.Column_Widths (I) => 'w') &
-              "}");
+            " {" & String'(1 .. Output_Object.Column_Widths (I) => 'w') & "}");
       end loop;
    end Output_Column_Widths;
 
-   procedure Output_Columns (Output_Object : in out Texinfo_Output_Type)
-   is
-      Row  : Natural         := 1;
+   procedure Output_Columns (Output_Object : in out Texinfo_Output_Type) is
+      Row  : Natural := 1;
       Item : Column_Text_Ptr;
       Temp : Column_Text_Ptr;
    begin
@@ -349,7 +362,9 @@ package body ARM_Texinfo is
 
             if Item /= null then
                --  Output the item
-               Escape_Put (Output_Object, Item.Text (1 .. Item.Length), Preserve_Space => True);
+               Escape_Put
+                 (Output_Object, Item.Text (1 .. Item.Length),
+                  Preserve_Space => True);
                Free (Item);
 
                if Col /= Output_Object.Column_Count then
@@ -364,7 +379,8 @@ package body ARM_Texinfo is
             end if;
          end loop Columns;
 
-         if Output_Object.Column_Text = Column_Text_Ptrs_Type'(others => null) then
+         if Output_Object.Column_Text = Column_Text_Ptrs_Type'(others => null)
+         then
             --  We've output everything.
             exit Rows;
          end if;
@@ -374,8 +390,8 @@ package body ARM_Texinfo is
       end loop Rows;
    end Output_Columns;
 
-   procedure Index_Menu (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Index_Menu (Output_Object : in out Texinfo_Output_Type) is
+   begin
       Put_Line (Output_Object.File, "@menu");
       Put_Line (Output_Object.File, "* operators::");
       Put_Line (Output_Object.File, "* A::");
@@ -409,9 +425,8 @@ package body ARM_Texinfo is
       --  @node current, next, prev, up
       Put_Line
         (Output_Object.File,
-         "@node " & Operators_Clause &
-           ", A, " & Index_Clause_Name &
-           ", " & Index_Clause_Name);
+         "@node " & Operators_Clause & ", A, " & Index_Clause_Name & ", " &
+         Index_Clause_Name);
 
       Put_Line (Output_Object.File, "@section operators");
    end Index_Menu;
@@ -420,17 +435,17 @@ package body ARM_Texinfo is
    --  Public subprograms. Alphabetical order
 
    procedure AI_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       AI_Number     : in     String)
-   is begin
+   is
+   begin
       Ordinary_Text (Output_Object, AI_Number & Text);
    end AI_Reference;
 
    procedure Category_Header
-     (Output_Object : in out Texinfo_Output_Type;
-      Header_Text   :        String)
-   is begin
+     (Output_Object : in out Texinfo_Output_Type; Header_Text : String)
+   is
+   begin
       Check_Not_In_Paragraph (Output_Object);
 
       --  Can't be in a multi-column setting.
@@ -442,12 +457,11 @@ package body ARM_Texinfo is
    end Category_Header;
 
    procedure Clause_Header
-     (Output_Object : in out Texinfo_Output_Type;
-      Header_Text   : in     String;
-      Level         : in     ARM_Contents.Level_Type;
-      Clause_Number : in     String;
-      Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
-      No_Page_Break : in     Boolean                 := False)
+     (Output_Object : in out Texinfo_Output_Type; Header_Text : in String;
+      Level : in     ARM_Contents.Level_Type; Clause_Number : in String;
+      Top_Level_Subdivision_Name : in     ARM_Output
+        .Top_Level_Subdivision_Name_Kind;
+      No_Page_Break : in Boolean := False)
    is
       pragma Unreferenced (No_Page_Break);
       pragma Unreferenced (Top_Level_Subdivision_Name);
@@ -459,11 +473,9 @@ package body ARM_Texinfo is
       Clause_Integer : Natural;
 
       procedure Put_Clause_Menu_Item
-        (Item_Title         : in     Title_Type;
-         Item_Level         : in     Level_Type;
-         Item_Clause_Number : in     Clause_Number_Type;
-         Version            : in     ARM_Contents.Change_Version_Type;
-         Quit               :    out Boolean)
+        (Item_Title         : in Title_Type; Item_Level : in Level_Type;
+         Item_Clause_Number : in Clause_Number_Type;
+         Version : in ARM_Contents.Change_Version_Type; Quit : out Boolean)
       is
          pragma Unreferenced (Version); --  only version 2
          First_Part : String (1 .. 14); --  Get all Titles aligned.
@@ -471,63 +483,16 @@ package body ARM_Texinfo is
          Quit := False;
 
          case Item_Level is
-         when Section | Unnumbered_Section |
-	      Normative_Annex | Informative_Annex | Plain_Annex |
-	      Subclause | Subsubclause =>
-            --  We are doing Clause here
-            null;
-
-         when Clause  =>
-            if Item_Clause_Number.Section < Section_Number then
+            when Section | Unnumbered_Section | Normative_Annex |
+              Informative_Annex | Plain_Annex | Subclause | Subsubclause =>
+               --  We are doing Clause here
                null;
 
-            elsif Item_Clause_Number.Section = Section_Number then
-               Ada.Strings.Fixed.Move
-                 (Source =>
-                    "* " &
-                    Make_Clause_Number (Item_Level, Item_Clause_Number) &
-                    " ::",
-                  Target => First_Part);
-
-               Put_Line (Output_Object.File, First_Part & Item_Title);
-            else
-               Quit := True;
-            end if;
-         when Dead_Clause =>
-            raise Program_Error with "Dead Clause in menu??"; -- No dead clauses should be output.
-         end case;
-      end Put_Clause_Menu_Item;
-
-      procedure Put_Clause_Menu is new For_Each (Put_Clause_Menu_Item);
-
-      procedure Put_Subclause_Menu_Item
-        (Item_Title         : in     Title_Type;
-         Item_Level         : in     Level_Type;
-         Item_Clause_Number : in     Clause_Number_Type;
-         Version            : in     ARM_Contents.Change_Version_Type;
-         Quit               :    out Boolean)
-      is
-         pragma Unreferenced (Version); --  only version 2
-         First_Part : String (1 .. 14); --  Get all Titles aligned.
-      begin
-         Quit := False;
-
-         case Item_Level is
-            when Section | Unnumbered_Section |
-		 Normative_Annex | Informative_Annex | Plain_Annex |
-		 Clause | Subsubclause =>
-               --  We are doing Subclause here
-               null;
-
-         when Subclause  =>
-            if Item_Clause_Number.Section < Section_Number then
-               null;
-
-            elsif Item_Clause_Number.Section = Section_Number then
-               if Item_Clause_Number.Clause < Clause_Integer then
+            when Clause =>
+               if Item_Clause_Number.Section < Section_Number then
                   null;
 
-               elsif Item_Clause_Number.Clause = Clause_Integer then
+               elsif Item_Clause_Number.Section = Section_Number then
                   Ada.Strings.Fixed.Move
                     (Source =>
                        "* " &
@@ -539,18 +504,63 @@ package body ARM_Texinfo is
                else
                   Quit := True;
                end if;
-            else
-               Quit := True;
-            end if;
-         when Dead_Clause =>
-            raise Program_Error with "Dead clause in submenu??"; -- No dead clauses should be output.
+            when Dead_Clause =>
+               raise Program_Error
+                 with "Dead Clause in menu??"; -- No dead clauses should be output.
+         end case;
+      end Put_Clause_Menu_Item;
+
+      procedure Put_Clause_Menu is new For_Each (Put_Clause_Menu_Item);
+
+      procedure Put_Subclause_Menu_Item
+        (Item_Title         : in Title_Type; Item_Level : in Level_Type;
+         Item_Clause_Number : in Clause_Number_Type;
+         Version : in ARM_Contents.Change_Version_Type; Quit : out Boolean)
+      is
+         pragma Unreferenced (Version); --  only version 2
+         First_Part : String (1 .. 14); --  Get all Titles aligned.
+      begin
+         Quit := False;
+
+         case Item_Level is
+            when Section | Unnumbered_Section | Normative_Annex |
+              Informative_Annex | Plain_Annex | Clause | Subsubclause =>
+               --  We are doing Subclause here
+               null;
+
+            when Subclause =>
+               if Item_Clause_Number.Section < Section_Number then
+                  null;
+
+               elsif Item_Clause_Number.Section = Section_Number then
+                  if Item_Clause_Number.Clause < Clause_Integer then
+                     null;
+
+                  elsif Item_Clause_Number.Clause = Clause_Integer then
+                     Ada.Strings.Fixed.Move
+                       (Source =>
+                          "* " &
+                          Make_Clause_Number (Item_Level, Item_Clause_Number) &
+                          " ::",
+                        Target => First_Part);
+
+                     Put_Line (Output_Object.File, First_Part & Item_Title);
+                  else
+                     Quit := True;
+                  end if;
+               else
+                  Quit := True;
+               end if;
+            when Dead_Clause =>
+               raise Program_Error
+                 with "Dead clause in submenu??"; -- No dead clauses should be output.
          end case;
       end Put_Subclause_Menu_Item;
 
       procedure Put_Subclause_Menu is new For_Each (Put_Subclause_Menu_Item);
 
-      function Safe_Next_Clause (Clause : in String) return String
-      is begin
+      function Safe_Next_Clause (Clause : in String) return String is
+      begin
          if Clause = Index_Clause then
             return Index_Clause_Next;
          else
@@ -565,20 +575,19 @@ package body ARM_Texinfo is
             end;
          end if;
       exception
-      when Not_Found_Error =>
-         return "";
+         when Not_Found_Error =>
+            return "";
       end Safe_Next_Clause;
 
-      function Safe_Previous_Clause (Clause : in String) return String
-      is begin
+      function Safe_Previous_Clause (Clause : in String) return String is
+      begin
          return ARM_Contents.Previous_Clause (Clause);
       exception
-      when Not_Found_Error =>
-         return "";
+         when Not_Found_Error =>
+            return "";
       end Safe_Previous_Clause;
 
-      function Safe_Parent_Clause (Clause : in String) return String
-      is
+      function Safe_Parent_Clause (Clause : in String) return String is
          Temp : constant String := ARM_Contents.Parent_Clause (Clause_Number);
       begin
          if Temp'Length = 0 or Temp = "0" then
@@ -600,14 +609,14 @@ package body ARM_Texinfo is
          --  This section has no content; don't confuse makeinfo.
          return;
 
-      elsif Clause_Number = Index_Clause and Header_Text = Index_Clause_Name then
+      elsif Clause_Number = Index_Clause and Header_Text = Index_Clause_Name
+      then
 
          Put_Line
            (Output_Object.File,
-            "@node " & Index_Clause_Name &
-              ", " & Index_Clause_Next &
-              ", " & Safe_Previous_Clause (Clause_Number) &
-              ", " & Safe_Parent_Clause (Clause_Number));
+            "@node " & Index_Clause_Name & ", " & Index_Clause_Next & ", " &
+            Safe_Previous_Clause (Clause_Number) & ", " &
+            Safe_Parent_Clause (Clause_Number));
 
          Put_Line (Output_Object.File, "@chapter Index");
          Output_Object.State := Index_Start;
@@ -616,130 +625,124 @@ package body ARM_Texinfo is
       end if;
 
       case Level is
-      when Section | Normative_Annex | Informative_Annex | Plain_Annex =>
-         --  Menu of these done at @node Top
-         null;
+         when Section | Normative_Annex | Informative_Annex | Plain_Annex =>
+            --  Menu of these done at @node Top
+            null;
 
-      when Unnumbered_Section =>
-         --  Unnumbered sections are not in ARM_Contents, but there's
-         --  currently only one of them, so they are not worth adding;
-         --  just hard-code the menu here.
-         Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
+         when Unnumbered_Section =>
+            --  Unnumbered sections are not in ARM_Contents, but there's
+            --  currently only one of them, so they are not worth adding;
+            --  just hard-code the menu here.
+            Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
 
-         if Section_Number = 0 and Clause_Integer = 1 then
-            Put_Line (Output_Object.File, "@menu");
-            Put_Line (Output_Object.File, "* 0.1 :: Foreword to this version of the Ada Reference Manual");
-            Put_Line (Output_Object.File, "* 0.2 :: Foreword");
-            Put_Line (Output_Object.File, "* 0.3 :: Introduction");
-            Put_Line (Output_Object.File, "* 0.99 :: International Standard");
-            Put_Line (Output_Object.File, "@end menu");
-         end if;
+            if Section_Number = 0 and Clause_Integer = 1 then
+               Put_Line (Output_Object.File, "@menu");
+               Put_Line
+                 (Output_Object.File,
+                  "* 0.1 :: Foreword to this version of the Ada Reference Manual");
+               Put_Line (Output_Object.File, "* 0.2 :: Foreword");
+               Put_Line (Output_Object.File, "* 0.3 :: Introduction");
+               Put_Line
+                 (Output_Object.File, "* 0.99 :: International Standard");
+               Put_Line (Output_Object.File, "@end menu");
+            end if;
 
-      when Clause =>
-         --  Output menu of Clauses in this section, if we haven't already
-         Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
+         when Clause =>
+            --  Output menu of Clauses in this section, if we haven't already
+            Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
 
-         if Output_Object.Menu_Section /= Section_Number then
-            Put_Line (Output_Object.File, "@menu");
-            Put_Clause_Menu;
-            Put_Line (Output_Object.File, "@end menu");
-            Output_Object.Menu_Section := Section_Number;
-            Output_Object.Menu_Clause  := 0;
-         end if;
+            if Output_Object.Menu_Section /= Section_Number then
+               Put_Line (Output_Object.File, "@menu");
+               Put_Clause_Menu;
+               Put_Line (Output_Object.File, "@end menu");
+               Output_Object.Menu_Section := Section_Number;
+               Output_Object.Menu_Clause  := 0;
+            end if;
 
-      when Subclause =>
-         --  Output menu of Subclauses in this Clause, if we haven't already
-         Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
+         when Subclause =>
+            --  Output menu of Subclauses in this Clause, if we haven't already
+            Get_Clause_Section (Clause_Number, Section_Number, Clause_Integer);
 
-         if Output_Object.Menu_Section = Section_Number and
-           Output_Object.Menu_Clause /= Clause_Integer
-         then
-            Put_Line (Output_Object.File, "@menu");
-            Put_Subclause_Menu;
-            Put_Line (Output_Object.File, "@end menu");
-            Output_Object.Menu_Clause := Clause_Integer;
-         end if;
+            if Output_Object.Menu_Section = Section_Number and
+              Output_Object.Menu_Clause /= Clause_Integer
+            then
+               Put_Line (Output_Object.File, "@menu");
+               Put_Subclause_Menu;
+               Put_Line (Output_Object.File, "@end menu");
+               Output_Object.Menu_Clause := Clause_Integer;
+            end if;
 
-      when Subsubclause =>
-         Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Clause_Header: Subsubclause");
+         when Subsubclause =>
+            Ada.Exceptions.Raise_Exception
+              (ARM_Output.Not_Valid_Error'Identity,
+               "Clause_Header: Subsubclause");
 
-      when Dead_Clause =>
-         Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Clause_Header: Dead_clause");
+         when Dead_Clause =>
+            Ada.Exceptions.Raise_Exception
+              (ARM_Output.Not_Valid_Error'Identity,
+               "Clause_Header: Dead_clause");
 
       end case;
 
       Put_Line
         (Output_Object.File,
-         "@node " & Clause_Number &
-           ", " & Safe_Next_Clause (Clause_Number) &
-           ", " & Safe_Previous_Clause (Clause_Number) &
-           ", " & Safe_Parent_Clause (Clause_Number));
+         "@node " & Clause_Number & ", " & Safe_Next_Clause (Clause_Number) &
+         ", " & Safe_Previous_Clause (Clause_Number) & ", " &
+         Safe_Parent_Clause (Clause_Number));
 
       case Level is
-      when Section =>
-         Put_Line (Output_Object.File, "@chapter " & Title);
+         when Section =>
+            Put_Line (Output_Object.File, "@chapter " & Title);
 
-      when Normative_Annex | Informative_Annex | Plain_Annex =>
-         Put_Line (Output_Object.File, "@chapter " & Title);
+         when Normative_Annex | Informative_Annex | Plain_Annex =>
+            Put_Line (Output_Object.File, "@chapter " & Title);
 
-      when Clause | Unnumbered_Section =>
-         Put_Line (Output_Object.File, "@section " & Title);
+         when Clause | Unnumbered_Section =>
+            Put_Line (Output_Object.File, "@section " & Title);
 
-      when Subclause =>
-         Put_Line (Output_Object.File, "@subsection " & Title);
+         when Subclause =>
+            Put_Line (Output_Object.File, "@subsection " & Title);
 
-      when Subsubclause =>
-         Put_Line (Output_Object.File, "@subsubsection " & Title);
+         when Subsubclause =>
+            Put_Line (Output_Object.File, "@subsubsection " & Title);
 
-      when Dead_Clause =>
-         raise Program_Error with "Dead_Clause in header?"; -- No output of dead clauses.
+         when Dead_Clause =>
+            raise Program_Error
+              with "Dead_Clause in header?"; -- No output of dead clauses.
       end case;
 
    end Clause_Header;
 
    procedure Clause_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       Clause_Number : in     String)
-   is begin
+   is
+   begin
       case Output_Object.State is
-      when Contents =>
-         null;
+         when Contents =>
+            null;
 
-      when Multi_Column | Table_Header =>
-         --  If this happens, we need to store escaped text in columns.
-         Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "clause reference in multi-column");
+         when Multi_Column | Table_Header =>
+            --  If this happens, we need to store escaped text in columns.
+            Ada.Exceptions.Raise_Exception
+              (ARM_Output.Not_Valid_Error'Identity,
+               "clause reference in multi-column");
 
-      when Normal =>
-         if Text = Clause_Number then
-            Put
-              (Output_Object.File,
-               "@ref{" &
-                 Clause_Number &
-                 "}");
-         else
-            Put
-              (Output_Object.File,
-               "@ref{" &
-                 Clause_Number &
-                 "} " &
-                 Text);
-         end if;
+         when Normal =>
+            if Text = Clause_Number then
+               Put (Output_Object.File, "@ref{" & Clause_Number & "}");
+            else
+               Put (Output_Object.File, "@ref{" & Clause_Number & "} " & Text);
+            end if;
 
-      when Title | Index_Start | Index =>
-         Unexpected_State (Output_Object);
+         when Title | Index_Start | Index =>
+            Unexpected_State (Output_Object);
 
       end case;
    end Clause_Reference;
 
-   procedure Close (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Close (Output_Object : in out Texinfo_Output_Type) is
+   begin
       Check_Valid (Output_Object);
 
       Put_Line (Output_Object.File, "@bye");
@@ -750,19 +753,16 @@ package body ARM_Texinfo is
    end Close;
 
    procedure Create
-     (Output_Object : in out Texinfo_Output_Type;
-      File_Prefix   : in     String;
-      Output_Path   : in     String;
-      Title         : in     String)
+     (Output_Object : in out Texinfo_Output_Type; File_Prefix : in String;
+      Output_Path   : in     String; Title : in String)
    is
-      File_Name : constant String := Output_Path &
-         Ada.Strings.Fixed.Trim (File_Prefix, Ada.Strings.Right) &
-         ".texinfo";
+      File_Name : constant String :=
+        Output_Path & Ada.Strings.Fixed.Trim (File_Prefix, Ada.Strings.Right) &
+        ".texinfo";
    begin
       if Output_Object.Is_Valid then
          Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Already valid object");
+           (ARM_Output.Not_Valid_Error'Identity, "Already valid object");
       end if;
 
       Output_Object.Is_Valid := True;
@@ -778,7 +778,8 @@ package body ARM_Texinfo is
 
       Put_Line (Output_Object.File, "@settitle " & Title);
       Put_Line (Output_Object.File, "@paragraphindent none");
-      Put_Line (Output_Object.File, "@exampleindent" & Integer'Image (Indentation));
+      Put_Line
+        (Output_Object.File, "@exampleindent" & Integer'Image (Indentation));
 
       Put_Line (Output_Object.File, "@node Top");
       Put_Line (Output_Object.File, "@top " & Title);
@@ -789,66 +790,48 @@ package body ARM_Texinfo is
    end Create;
 
    procedure DR_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       DR_Number     : in     String)
-   is begin
+   is
+   begin
       Ordinary_Text (Output_Object, DR_Number & Text);
    end DR_Reference;
 
-   procedure End_Hang_Item (Output_Object : in out Texinfo_Output_Type)
-   is
+   procedure End_Hang_Item (Output_Object : in out Texinfo_Output_Type) is
       use ARM_Output;
    begin
       Output_Object.End_Hang_Seen := True;
 
       case Output_Object.Style is
-         when Normal |
-           Wide_Above |
-           Small |
-           Small_Wide_Above |
-           Header |
-           Small_Header |
-           Syntax_Summary =>
+         when Normal | Wide_Above | Small | Small_Wide_Above | Header |
+           Small_Header | Syntax_Summary =>
 
             Handle_Indent (Output_Object, "@quotation");
 
-         when Index |
-           Title =>
+         when Index | Title =>
             null;
 
-         when Examples |
-           Small_Examples |
-           Swiss_Examples |
+         when Examples | Small_Examples | Swiss_Examples |
            Small_Swiss_Examples =>
 
             Handle_Indent (Output_Object, "@example");
 
-         when Bulleted |
-           Small_Bulleted =>
+         when Bulleted | Small_Bulleted =>
 
             Handle_Indent (Output_Object, "@itemize");
 
-         when Nested_Bulleted |
-           Small_Nested_Bulleted =>
+         when Nested_Bulleted | Small_Nested_Bulleted =>
 
             Handle_Indent (Output_Object, "@itemize", Extra_Indent => 1);
 
-         when Enumerated |
-           Small_Enumerated =>
+         when Enumerated | Small_Enumerated =>
 
             --  Number has just been output; start text.
             Put (Output_Object.File, "@w{  }");
 
-         when Giant_Hanging |
-           Small_Giant_Hanging |
-           Wide_Hanging |
-           Small_Wide_Hanging |
-           Medium_Hanging |
-           Small_Medium_Hanging |
-           Narrow_Hanging |
-           Small_Narrow_Hanging |
-           Hanging_in_Bulleted |
+         when Giant_Hanging | Small_Giant_Hanging | Wide_Hanging |
+           Small_Wide_Hanging | Medium_Hanging | Small_Medium_Hanging |
+           Narrow_Hanging | Small_Narrow_Hanging | Hanging_in_Bulleted |
            Small_Hanging_in_Bulleted =>
 
             New_Line (Output_Object.File);
@@ -861,135 +844,119 @@ package body ARM_Texinfo is
    procedure Text_Format
      (Output_Object : in out Texinfo_Output_Type;
       Format        : in     ARM_Output.Format_Type)
-   is begin
+   is
+   begin
       null;
    end Text_Format;
 
-   procedure End_Paragraph (Output_Object : in out Texinfo_Output_Type)
-   is
+   procedure End_Paragraph (Output_Object : in out Texinfo_Output_Type) is
       use ARM_Output;
    begin
       Output_Object.In_Paragraph := False;
 
       case Output_Object.State is
-      when Contents =>
-         null;
-
-      when Multi_Column =>
-         --  Skip a row, to separate paragraphs in a column.
-         Output_Object.Current_Row := Output_Object.Current_Row + 2;
-
-      when Title =>
-         if Output_Object.Line_Empty then
+         when Contents =>
             null;
-         else
-            New_Line (Output_Object.File, 2);
-            Put (Output_Object.File, "@center ");
-            Output_Object.Line_Empty := True;
-         end if;
 
-      when Normal =>
-         case Output_Object.Style is
-         when Normal |
-           Wide_Above |
-           Small |
-           Small_Wide_Above |
-           Header |
-           Small_Header |
-           Syntax_Summary =>
+         when Multi_Column =>
+            --  Skip a row, to separate paragraphs in a column.
+            Output_Object.Current_Row := Output_Object.Current_Row + 2;
 
-            New_Line (Output_Object.File);
-            Handle_Indent (Output_Object, "@end quotation");
-            New_Line (Output_Object.File);
-
-         when Index |
-           Title =>
-
-            New_Line (Output_Object.File, 2);
-
-         when Examples |
-           Small_Examples |
-           Swiss_Examples |
-           Small_Swiss_Examples =>
-
-            New_Line (Output_Object.File);
-            Handle_Indent (Output_Object, "@end example");
-            New_Line (Output_Object.File);
-
-         when Bulleted |
-           Small_Bulleted =>
-
-            New_Line (Output_Object.File);
-            Handle_Indent (Output_Object, "@end itemize");
-            New_Line (Output_Object.File);
-
-         when Nested_Bulleted |
-           Small_Nested_Bulleted =>
-
-            New_Line (Output_Object.File);
-            Handle_Indent (Output_Object, "@end itemize", Extra_Indent => 1);
-            New_Line (Output_Object.File);
-
-         when Enumerated |
-           Small_Enumerated =>
-
-            New_Line (Output_Object.File);
-            Handle_Indent (Output_Object, "@end itemize");
-            New_Line (Output_Object.File);
-
-         when Giant_Hanging |
-           Small_Giant_Hanging |
-           Wide_Hanging |
-           Small_Wide_Hanging |
-           Medium_Hanging |
-           Small_Medium_Hanging |
-           Narrow_Hanging |
-           Small_Narrow_Hanging |
-           Hanging_in_Bulleted |
-           Small_Hanging_in_Bulleted =>
-
-            New_Line (Output_Object.File);
-            if Output_Object.End_Hang_Seen then
-               Handle_Indent (Output_Object, "@end quotation");
+         when Title =>
+            if Output_Object.Line_Empty then
+               null;
+            else
+               New_Line (Output_Object.File, 2);
+               Put (Output_Object.File, "@center ");
+               Output_Object.Line_Empty := True;
             end if;
-            New_Line (Output_Object.File);
 
-         end case;
+         when Normal =>
+            case Output_Object.Style is
+               when Normal | Wide_Above | Small | Small_Wide_Above | Header |
+                 Small_Header | Syntax_Summary =>
 
-      when Index_Start =>
-         Output_Object.State := Index;
+                  New_Line (Output_Object.File);
+                  Handle_Indent (Output_Object, "@end quotation");
+                  New_Line (Output_Object.File);
 
-         Index_Menu (Output_Object);
+               when Index | Title =>
 
-      when Index =>
-         --  Keep index items tightly grouped.
-         Put_Line (Output_Object.File, "@*");
+                  New_Line (Output_Object.File, 2);
 
-      when Table_Header =>
-         Unexpected_State (Output_Object);
+               when Examples | Small_Examples | Swiss_Examples |
+                 Small_Swiss_Examples =>
+
+                  New_Line (Output_Object.File);
+                  Handle_Indent (Output_Object, "@end example");
+                  New_Line (Output_Object.File);
+
+               when Bulleted | Small_Bulleted =>
+
+                  New_Line (Output_Object.File);
+                  Handle_Indent (Output_Object, "@end itemize");
+                  New_Line (Output_Object.File);
+
+               when Nested_Bulleted | Small_Nested_Bulleted =>
+
+                  New_Line (Output_Object.File);
+                  Handle_Indent
+                    (Output_Object, "@end itemize", Extra_Indent => 1);
+                  New_Line (Output_Object.File);
+
+               when Enumerated | Small_Enumerated =>
+
+                  New_Line (Output_Object.File);
+                  Handle_Indent (Output_Object, "@end itemize");
+                  New_Line (Output_Object.File);
+
+               when Giant_Hanging | Small_Giant_Hanging | Wide_Hanging |
+                 Small_Wide_Hanging | Medium_Hanging | Small_Medium_Hanging |
+                 Narrow_Hanging | Small_Narrow_Hanging | Hanging_in_Bulleted |
+                 Small_Hanging_in_Bulleted =>
+
+                  New_Line (Output_Object.File);
+                  if Output_Object.End_Hang_Seen then
+                     Handle_Indent (Output_Object, "@end quotation");
+                  end if;
+                  New_Line (Output_Object.File);
+
+            end case;
+
+         when Index_Start =>
+            Output_Object.State := Index;
+
+            Index_Menu (Output_Object);
+
+         when Index =>
+            --  Keep index items tightly grouped.
+            Put_Line (Output_Object.File, "@*");
+
+         when Table_Header =>
+            Unexpected_State (Output_Object);
 
       end case;
    end End_Paragraph;
 
-   procedure Hard_Space (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Hard_Space (Output_Object : in out Texinfo_Output_Type) is
+   begin
       case Output_Object.State is
-      when Contents =>
-         null;
-
-      when Multi_Column | Table_Header =>
-         --  Can't do line breaks in columns
-         Add_To_Column_Item (Output_Object, " ");
-
-      when Title =>
-         if Output_Object.Line_Empty then
+         when Contents =>
             null;
-         else
-            Put (Output_Object.File, "@w{ }");
-         end if;
 
-      when Normal | Index_Start | Index =>
-         Put (Output_Object.File, "@w{ }");
+         when Multi_Column | Table_Header =>
+            --  Can't do line breaks in columns
+            Add_To_Column_Item (Output_Object, " ");
+
+         when Title =>
+            if Output_Object.Line_Empty then
+               null;
+            else
+               Put (Output_Object.File, "@w{ }");
+            end if;
+
+         when Normal | Index_Start | Index =>
+            Put (Output_Object.File, "@w{ }");
       end case;
    end Hard_Space;
 
@@ -1003,105 +970,83 @@ package body ARM_Texinfo is
    end Index_Line_Break;
 
    procedure Index_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
-      Index_Key     : in     Natural;
-      Clause_Number : in     String)
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
+      Index_Key     : in     Natural; Clause_Number : in String)
    is
       pragma Unreferenced (Clause_Number);
       --  Text is clause_number & paragraph number (optional).
    begin
-      Put (Output_Object.File, "@ref{" & Integer'Image (Index_Key) & ", " & Text & "}");
+      Put
+        (Output_Object.File,
+         "@ref{" & Integer'Image (Index_Key) & ", " & Text & "}");
    end Index_Reference;
 
    procedure Index_Target
-     (Output_Object : in out Texinfo_Output_Type;
-      Index_Key     : in     Natural)
-   is begin
+     (Output_Object : in out Texinfo_Output_Type; Index_Key : in Natural)
+   is
+   begin
       --  Add an empty non-break object, because @anchor ignores
       --  whitespace after it, which often occurs in the current
       --  Scribe-like source.
-      Put (Output_Object.File, "@anchor{" & Integer'Image (Index_Key) & "}@w{}");
+      Put
+        (Output_Object.File, "@anchor{" & Integer'Image (Index_Key) & "}@w{}");
    end Index_Target;
 
-   procedure Line_Break (Output_Object : in out Texinfo_Output_Type)
-   is
+   procedure Line_Break (Output_Object : in out Texinfo_Output_Type) is
       use ARM_Output;
    begin
       case Output_Object.State is
-      when Title =>
-         if Output_Object.Line_Empty then
+         when Title =>
+            if Output_Object.Line_Empty then
+               null;
+            else
+               Put_Line (Output_Object.File, "@*");
+               Output_Object.Line_Empty := True;
+            end if;
+
+         when Contents =>
             null;
-         else
-            Put_Line (Output_Object.File, "@*");
-            Output_Object.Line_Empty := True;
-         end if;
 
-      when Contents =>
-         null;
+         when Multi_Column | Table_Header =>
+            Output_Object.Current_Row := Output_Object.Current_Row + 1;
+            if Output_Object.Max_Row < Output_Object.Current_Row then
+               Output_Object.Max_Row := Output_Object.Current_Row;
+            end if;
 
-      when Multi_Column | Table_Header =>
-         Output_Object.Current_Row := Output_Object.Current_Row + 1;
-         if Output_Object.Max_Row < Output_Object.Current_Row then
-            Output_Object.Max_Row := Output_Object.Current_Row;
-         end if;
+         when Index_Start =>
+            --  This doesn't happen
+            Ada.Exceptions.Raise_Exception
+              (ARM_Output.Not_Valid_Error'Identity, "Line_Break Index_Start");
 
-      when Index_Start =>
-         --  This doesn't happen
-         Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Line_Break Index_Start");
+         when Normal | Index =>
+            case Output_Object.Style is
+               when Normal | Wide_Above | Small | Small_Wide_Above | Header |
+                 Small_Header | Syntax_Summary | Index | Title =>
 
-      when Normal | Index =>
-         case Output_Object.Style is
-         when Normal |
-           Wide_Above |
-           Small |
-           Small_Wide_Above |
-           Header |
-           Small_Header |
-           Syntax_Summary |
-           Index |
-           Title =>
+                  Put_Line (Output_Object.File, "@*");
 
-            Put_Line (Output_Object.File, "@*");
+               when Examples | Small_Examples | Swiss_Examples |
+                 Small_Swiss_Examples =>
 
-         when Examples |
-           Small_Examples |
-           Swiss_Examples |
-           Small_Swiss_Examples =>
+                  New_Line (Output_Object.File);
 
-            New_Line (Output_Object.File);
+               when Bulleted | Small_Bulleted | Nested_Bulleted |
+                 Small_Nested_Bulleted | Enumerated | Small_Enumerated |
+                 Giant_Hanging | Small_Giant_Hanging | Wide_Hanging |
+                 Small_Wide_Hanging | Medium_Hanging | Small_Medium_Hanging |
+                 Narrow_Hanging | Small_Narrow_Hanging | Hanging_in_Bulleted |
+                 Small_Hanging_in_Bulleted =>
 
-         when Bulleted |
-           Small_Bulleted |
-           Nested_Bulleted |
-           Small_Nested_Bulleted |
-           Enumerated |
-           Small_Enumerated |
-           Giant_Hanging |
-           Small_Giant_Hanging |
-           Wide_Hanging |
-           Small_Wide_Hanging |
-           Medium_Hanging |
-           Small_Medium_Hanging |
-           Narrow_Hanging |
-           Small_Narrow_Hanging |
-           Hanging_in_Bulleted |
-           Small_Hanging_in_Bulleted =>
+                  Put_Line (Output_Object.File, "@*");
 
-            Put_Line (Output_Object.File, "@*");
-
-         end case;
+            end case;
 
       end case;
    end Line_Break;
 
    procedure Local_Link
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
-      Target        : in     String;
-      Clause_Number : in     String)
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
+      Target        : in     String; Clause_Number : in String)
    is
       pragma Unreferenced (Target);
       pragma Unreferenced (Clause_Number);
@@ -1120,18 +1065,19 @@ package body ARM_Texinfo is
    end Local_Link;
 
    procedure Local_Link_End
-     (Output_Object : in out Texinfo_Output_Type;
-      Target        : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Target : in String;
       Clause_Number : in     String)
-   is begin
+   is
+   begin
       --  These work better than local links, because they are not in
       --  the middle of plurals. First use is section 3.1 (1).
-      Put (Output_Object.File, " (@pxref{" & Target & "," & Clause_Number & "})");
+      Put
+        (Output_Object.File,
+         " (@pxref{" & Target & "," & Clause_Number & "})");
    end Local_Link_End;
 
    procedure Local_Link_Start
-     (Output_Object : in out Texinfo_Output_Type;
-      Target        : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Target : in String;
       Clause_Number : in     String)
    is
       pragma Unreferenced (Output_Object);
@@ -1143,10 +1089,10 @@ package body ARM_Texinfo is
    end Local_Link_Start;
 
    procedure Local_Target
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       Target        : in     String)
-   is begin
+   is
+   begin
       --  Add an empty non-break object, because @anchor ignores
       --  whitespace after it, which often occurs in the current
       --  Scheme source.
@@ -1154,8 +1100,8 @@ package body ARM_Texinfo is
       Ordinary_Text (Output_Object, Text);
    end Local_Target;
 
-   procedure New_Column (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure New_Column (Output_Object : in out Texinfo_Output_Type) is
+   begin
       if Output_Object.Column_Count >= 4 then
          Output_Object.Current_Column := Output_Object.Current_Column + 1;
          Output_Object.Current_Row    := 1;
@@ -1174,133 +1120,137 @@ package body ARM_Texinfo is
    end New_Page;
 
    procedure Ordinary_Character
-     (Output_Object : in out Texinfo_Output_Type;
-      Char          : in     Character)
+     (Output_Object : in out Texinfo_Output_Type; Char : in Character)
    is
       Copyright : constant String := "Copyright";
    begin
       case Output_Object.State is
-      when Contents =>
-         null;
+         when Contents =>
+            null;
 
-      when Multi_Column | Table_Header =>
-         Add_To_Column_Item (Output_Object, "" & Char);
+         when Multi_Column | Table_Header =>
+            Add_To_Column_Item (Output_Object, "" & Char);
 
-      when Title =>
-         --  Check for end of title page; indicated by line starting with "Copyright"
-         if Output_Object.Line_Empty then
-            if Output_Object.First_Word_Last > 0 then
-               if Copyright (Output_Object.First_Word_Last + 1) = Char then
-                  Output_Object.First_Word_Last := Output_Object.First_Word_Last + 1;
-                  Output_Object.First_Word (Output_Object.First_Word_Last) := Char;
+         when Title =>
+   --  Check for end of title page; indicated by line starting with "Copyright"
+            if Output_Object.Line_Empty then
+               if Output_Object.First_Word_Last > 0 then
+                  if Copyright (Output_Object.First_Word_Last + 1) = Char then
+                     Output_Object.First_Word_Last :=
+                       Output_Object.First_Word_Last + 1;
+                     Output_Object.First_Word
+                       (Output_Object.First_Word_Last) :=
+                       Char;
 
-                  if Output_Object.First_Word_Last = Copyright'Last then
-                     End_Title_Page (Output_Object);
-                     Output_Object.State := Normal;
-                     Ordinary_Text (Output_Object, Output_Object.First_Word (1 .. Output_Object.First_Word_Last));
+                     if Output_Object.First_Word_Last = Copyright'Last then
+                        End_Title_Page (Output_Object);
+                        Output_Object.State := Normal;
+                        Ordinary_Text
+                          (Output_Object,
+                           Output_Object.First_Word
+                             (1 .. Output_Object.First_Word_Last));
+                     end if;
+                  else
+                     --  First word is not Copyright; output it
+                     Ordinary_Text
+                       (Output_Object,
+                        Output_Object.First_Word
+                          (1 .. Output_Object.First_Word_Last));
+                     Output_Object.Line_Empty := False;
                   end if;
                else
-                  --  First word is not Copyright; output it
-                  Ordinary_Text (Output_Object, Output_Object.First_Word (1 .. Output_Object.First_Word_Last));
-                  Output_Object.Line_Empty := False;
+                  --  No non-space seen yet
+                  if Char = ' ' then
+                     null;
+                  elsif Char = Copyright (1) then
+                     Output_Object.First_Word_Last := 1;
+                     Output_Object.First_Word (1)  := Char;
+                  else
+                     Escape_Put (Output_Object, Char);
+                     Output_Object.Line_Empty := False;
+                  end if;
                end if;
             else
-               --  No non-space seen yet
-               if Char = ' ' then
-                  null;
-               elsif Char = Copyright (1) then
-                  Output_Object.First_Word_Last := 1;
-                  Output_Object.First_Word (1)  := Char;
-               else
-                  Escape_Put (Output_Object, Char);
-                  Output_Object.Line_Empty := False;
-               end if;
+               --  Line already has stuff on it
+               Escape_Put (Output_Object, Char);
             end if;
-         else
-            --  Line already has stuff on it
+
+         when Normal =>
+            Output_Object.Line_Empty := Char /= ' ';
+
             Escape_Put (Output_Object, Char);
-         end if;
 
-      when Normal =>
-         Output_Object.Line_Empty := Char /= ' ';
+         when Index_Start =>
+            Escape_Put (Output_Object, Char);
+            if Char = '&' then
+               --  give debugger a place to break
+               Put_Line ("first index entry");
+            end if;
 
-         Escape_Put (Output_Object, Char);
-
-      when Index_Start =>
-         Escape_Put (Output_Object, Char);
-         if Char = '&' then
-            --  give debugger a place to break
-            Put_Line ("first index entry");
-         end if;
-
-      when Index =>
-         case Char is
-         when ' ' | ',' | '[' | ']' =>
-            Put (Output_Object.File, Char);
-
-         when 'A' .. Last_Index_Clause =>
-            --  Index section heading
-
-            --  @node current, next, prev, up
+         when Index =>
             case Char is
-            when 'A' =>
-               Put_Line
-                 (Output_Object.File,
-                  "@node " & Char &
-                    ", B, " & Operators_Clause &
-                    ", " & Index_Clause_Name);
+               when ' ' | ',' | '[' | ']' =>
+                  Put (Output_Object.File, Char);
 
-            when Last_Index_Clause =>
-               Put_Line
-                 (Output_Object.File,
-                  "@node " & Char &
-                    ", , " & Character'Pred (Char) &
-                    ", " & Index_Clause_Name);
+               when 'A' .. Last_Index_Clause =>
+                  --  Index section heading
 
-            when others =>
-               Put_Line
-                 (Output_Object.File,
-                  "@node " & Char &
-                    ", " & Character'Succ (Char) &
-                    ", " & Character'Pred (Char) &
-                    ", " & Index_Clause_Name);
+                  --  @node current, next, prev, up
+                  case Char is
+                     when 'A' =>
+                        Put_Line
+                          (Output_Object.File,
+                           "@node " & Char & ", B, " & Operators_Clause &
+                           ", " & Index_Clause_Name);
+
+                     when Last_Index_Clause =>
+                        Put_Line
+                          (Output_Object.File,
+                           "@node " & Char & ", , " & Character'Pred (Char) &
+                           ", " & Index_Clause_Name);
+
+                     when others =>
+                        Put_Line
+                          (Output_Object.File,
+                           "@node " & Char & ", " & Character'Succ (Char) &
+                           ", " & Character'Pred (Char) & ", " &
+                           Index_Clause_Name);
+                  end case;
+
+                  --  Add non-break space so Emacs info will use big bold
+                  --  font for single letter titles.
+                  Put_Line (Output_Object.File, "@section " & Char & "@w{ }");
+
+               when others =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Unexpected char in Index: " & Char);
             end case;
-
-            --  Add non-break space so Emacs info will use big bold
-            --  font for single letter titles.
-            Put_Line (Output_Object.File, "@section " & Char & "@w{ }");
-
-         when others =>
-            Ada.Exceptions.Raise_Exception (ARM_Output.Not_Valid_Error'Identity, "Unexpected char in Index: " & Char);
-         end case;
       end case;
    end Ordinary_Character;
 
    procedure Ordinary_Text
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String)
-   is begin
+     (Output_Object : in out Texinfo_Output_Type; Text : in String)
+   is
+   begin
       case Output_Object.State is
-      when Contents =>
-         null;
+         when Contents =>
+            null;
 
-      when Multi_Column | Table_Header =>
-         Add_To_Column_Item (Output_Object, Text);
+         when Multi_Column | Table_Header =>
+            Add_To_Column_Item (Output_Object, Text);
 
-      when Normal | Title | Index_Start | Index =>
-         Output_Object.Line_Empty := False;
+         when Normal | Title | Index_Start | Index =>
+            Output_Object.Line_Empty := False;
 
-         Escape_Put (Output_Object, Text);
+            Escape_Put (Output_Object, Text);
       end case;
    end Ordinary_Text;
 
    procedure Picture
-     (Output_Object : in out Texinfo_Output_Type;
-      Name          : in     String;
-      Descr         : in     String;
-      Alignment     : in     ARM_Output.Picture_Alignment;
-      Height, Width : in     Natural;
-      Border        : in     ARM_Output.Border_Kind)
+     (Output_Object : in out Texinfo_Output_Type; Name : in String;
+      Descr         : in String; Alignment : in ARM_Output.Picture_Alignment;
+      Height, Width : in     Natural; Border : in ARM_Output.Border_Kind)
    is
       pragma Unreferenced (Border);
       pragma Unreferenced (Width);
@@ -1309,32 +1259,29 @@ package body ARM_Texinfo is
       pragma Unreferenced (Name);
    begin
       Ada.Exceptions.Raise_Exception
-        (ARM_Output.Not_Valid_Error'Identity,
-         "Picture: " & Descr);
+        (ARM_Output.Not_Valid_Error'Identity, "Picture: " & Descr);
    end Picture;
 
    procedure Revised_Clause_Header
-     (Output_Object   : in out Texinfo_Output_Type;
-      New_Header_Text : in     String;
-      Old_Header_Text : in     String;
-      Level           : in     ARM_Contents.Level_Type;
-      Clause_Number   : in     String;
-      Version         : in     ARM_Contents.Change_Version_Type;
-      Old_Version     : in     ARM_Contents.Change_Version_Type;
-      Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
-      No_Page_Break   : in     Boolean                          := False)
+     (Output_Object : in out Texinfo_Output_Type; New_Header_Text : in String;
+      Old_Header_Text : in     String; Level : in ARM_Contents.Level_Type;
+      Clause_Number : in String; Version : in ARM_Contents.Change_Version_Type;
+      Old_Version                : in     ARM_Contents.Change_Version_Type;
+      Top_Level_Subdivision_Name : in     ARM_Output
+        .Top_Level_Subdivision_Name_Kind;
+      No_Page_Break : in Boolean := False)
    is
       pragma Unreferenced (Version);
       pragma Unreferenced (Old_Version);
       pragma Unreferenced (Old_Header_Text);
    begin
-      Clause_Header (Output_Object, New_Header_Text, Level, Clause_Number,
-		     Top_Level_Subdivision_Name, No_Page_Break);
+      Clause_Header
+        (Output_Object, New_Header_Text, Level, Clause_Number,
+         Top_Level_Subdivision_Name, No_Page_Break);
    end Revised_Clause_Header;
 
    procedure Section
-     (Output_Object : in out Texinfo_Output_Type;
-      Section_Title : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Section_Title : in String;
       Section_Name  : in     String)
    is
       pragma Unreferenced (Section_Name);
@@ -1346,9 +1293,9 @@ package body ARM_Texinfo is
    end Section;
 
    procedure Separator_Line
-     (Output_Object : in out Texinfo_Output_Type;
-      Is_Thin       :        Boolean             := True)
-   is begin
+     (Output_Object : in out Texinfo_Output_Type; Is_Thin : Boolean := True)
+   is
+   begin
       --  Can't be in a multi-column setting.
       New_Line (Output_Object.File);
       if Is_Thin then
@@ -1361,7 +1308,8 @@ package body ARM_Texinfo is
    procedure Set_Columns
      (Output_Object     : in out Texinfo_Output_Type;
       Number_of_Columns : in     ARM_Output.Column_Count)
-   is begin
+   is
+   begin
       Check_Valid (Output_Object);
       Check_Not_In_Paragraph (Output_Object);
 
@@ -1374,62 +1322,63 @@ package body ARM_Texinfo is
       --  do not contain any nested paragraph formats.
 
       case Output_Object.State is
-      when Normal =>
-         if Number_of_Columns >= 4 then
-            Output_Object.State          := Multi_Column;
-            Output_Object.Current_Column := 1;
-            Output_Object.Current_Row    := 1;
-            Output_Object.Column_Widths  := (others => 0);
+         when Normal =>
+            if Number_of_Columns >= 4 then
+               Output_Object.State          := Multi_Column;
+               Output_Object.Current_Column := 1;
+               Output_Object.Current_Row    := 1;
+               Output_Object.Column_Widths  := (others => 0);
 
-            --  Accumulate all column rows in Output_Text, then output
-            --  when done, so we can set the correct column width in
-            --  the header. Each column is a linked list of allocated
-            --  Column_Text_Item_Type.
-         else
-            null;
-         end if;
+               --  Accumulate all column rows in Output_Text, then output
+               --  when done, so we can set the correct column width in
+               --  the header. Each column is a linked list of allocated
+               --  Column_Text_Item_Type.
+            else
+               null;
+            end if;
 
-      when Multi_Column =>
-         if Number_of_Columns = 1 then
+         when Multi_Column =>
+            if Number_of_Columns = 1 then
             --  Finished accumulating columns, output the columns as a table.
-            Output_Column_Widths (Output_Object);
-            Output_Columns (Output_Object);
-            New_Line (Output_Object.File);
-            Put_Line (Output_Object.File, "@end multitable");
-            New_Line (Output_Object.File);
+               Output_Column_Widths (Output_Object);
+               Output_Columns (Output_Object);
+               New_Line (Output_Object.File);
+               Put_Line (Output_Object.File, "@end multitable");
+               New_Line (Output_Object.File);
 
-            Output_Object.State := Normal;
-         else
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity, "New multi-column section before end of old");
-         end if;
+               Output_Object.State := Normal;
+            else
+               Ada.Exceptions.Raise_Exception
+                 (ARM_Output.Not_Valid_Error'Identity,
+                  "New multi-column section before end of old");
+            end if;
 
-      when Index_Start | Index =>
-         null;
+         when Index_Start | Index =>
+            null;
 
-      when Table_Header | Contents | Title =>
-         Unexpected_State (Output_Object);
+         when Table_Header | Contents | Title =>
+            Unexpected_State (Output_Object);
       end case;
 
       Output_Object.Column_Count := Number_of_Columns;
    end Set_Columns;
 
-   procedure Soft_Hyphen_Break (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Soft_Hyphen_Break (Output_Object : in out Texinfo_Output_Type) is
+   begin
       Put (Output_Object.File, "@-");
    end Soft_Hyphen_Break;
 
-   procedure Soft_Line_Break (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Soft_Line_Break (Output_Object : in out Texinfo_Output_Type) is
+   begin
       case Output_Object.State is
-      when Contents | Title =>
-         null;
+         when Contents | Title =>
+            null;
 
-      when Normal | Index_Start | Index =>
-         Put (Output_Object.File, "@-");
+         when Normal | Index_Start | Index =>
+            Put (Output_Object.File, "@-");
 
-      when Multi_Column | Table_Header =>
-         Unexpected_State (Output_Object);
+         when Multi_Column | Table_Header =>
+            Unexpected_State (Output_Object);
 
       end case;
    end Soft_Line_Break;
@@ -1437,124 +1386,123 @@ package body ARM_Texinfo is
    procedure Special_Character
      (Output_Object : in out Texinfo_Output_Type;
       Char          : in     ARM_Output.Special_Character_Type)
-   is begin
+   is
+   begin
       --  We use Ordinary_Text, so this is output to columns when appropriate.
       case Char is
-      when ARM_Output.EM_Dash =>
-         Ordinary_Text (Output_Object, "--");
-      when ARM_Output.EN_Dash =>
-         Ordinary_Text (Output_Object, "--");
-      when ARM_Output.GEQ =>
-         Ordinary_Text (Output_Object, ">=");
-      when ARM_Output.LEQ =>
-         Ordinary_Text (Output_Object, "<=");
-      when ARM_Output.NEQ =>
-         Ordinary_Text (Output_Object, "/=");
-      when ARM_Output.PI =>
-         Ordinary_Text (Output_Object, "PI");
+         when ARM_Output.EM_Dash =>
+            Ordinary_Text (Output_Object, "--");
+         when ARM_Output.EN_Dash =>
+            Ordinary_Text (Output_Object, "--");
+         when ARM_Output.GEQ =>
+            Ordinary_Text (Output_Object, ">=");
+         when ARM_Output.LEQ =>
+            Ordinary_Text (Output_Object, "<=");
+         when ARM_Output.NEQ =>
+            Ordinary_Text (Output_Object, "/=");
+         when ARM_Output.PI =>
+            Ordinary_Text (Output_Object, "PI");
 
-      when ARM_Output.Left_Ceiling =>
-         case Output_Object.State is
-         when Multi_Column | Table_Header =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Info does not support ceiling in multi-column");
-         when Contents =>
-            null;
+         when ARM_Output.Left_Ceiling =>
+            case Output_Object.State is
+               when Multi_Column | Table_Header =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Info does not support ceiling in multi-column");
+               when Contents =>
+                  null;
 
-         when Normal | Index_Start | Index =>
-            Put (Output_Object.File, "@code{ceiling(");
+               when Normal | Index_Start | Index =>
+                  Put (Output_Object.File, "@code{ceiling(");
 
-         when Title =>
-            Unexpected_State (Output_Object);
+               when Title =>
+                  Unexpected_State (Output_Object);
 
-         end case;
+            end case;
 
-      when ARM_Output.Right_Ceiling =>
-         case Output_Object.State is
-         when Multi_Column | Table_Header =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Info does not support ceiling in multi-column");
-         when Contents =>
-            null;
+         when ARM_Output.Right_Ceiling =>
+            case Output_Object.State is
+               when Multi_Column | Table_Header =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Info does not support ceiling in multi-column");
+               when Contents =>
+                  null;
 
-         when Normal | Index_Start | Index =>
-            Put (Output_Object.File, ")}");
+               when Normal | Index_Start | Index =>
+                  Put (Output_Object.File, ")}");
 
-         when Title =>
-            Unexpected_State (Output_Object);
+               when Title =>
+                  Unexpected_State (Output_Object);
 
-         end case;
+            end case;
 
-      when ARM_Output.Left_Floor =>
-         case Output_Object.State is
-         when Multi_Column | Table_Header =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Info does not support floor in multi-column");
-         when Contents =>
-            null;
+         when ARM_Output.Left_Floor =>
+            case Output_Object.State is
+               when Multi_Column | Table_Header =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Info does not support floor in multi-column");
+               when Contents =>
+                  null;
 
-         when Normal | Index_Start | Index =>
-            Put (Output_Object.File, "@code{floor(");
+               when Normal | Index_Start | Index =>
+                  Put (Output_Object.File, "@code{floor(");
 
-         when Title =>
-            Unexpected_State (Output_Object);
+               when Title =>
+                  Unexpected_State (Output_Object);
 
-         end case;
+            end case;
 
-      when ARM_Output.Right_Floor =>
-         case Output_Object.State is
-         when Multi_Column | Table_Header =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Info does not support floor in multi-column");
-         when Contents =>
-            null;
+         when ARM_Output.Right_Floor =>
+            case Output_Object.State is
+               when Multi_Column | Table_Header =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Info does not support floor in multi-column");
+               when Contents =>
+                  null;
 
-         when Normal | Index_Start | Index =>
-            Put (Output_Object.File, ")}");
+               when Normal | Index_Start | Index =>
+                  Put (Output_Object.File, ")}");
 
-         when Title =>
-            Unexpected_State (Output_Object);
+               when Title =>
+                  Unexpected_State (Output_Object);
 
-         end case;
+            end case;
 
-      when ARM_Output.Thin_Space =>
-         Ordinary_Text (Output_Object, " ");
+         when ARM_Output.Thin_Space =>
+            Ordinary_Text (Output_Object, " ");
 
-      when ARM_Output.Left_Quote =>
-         Ordinary_Text (Output_Object, "`");
+         when ARM_Output.Left_Quote =>
+            Ordinary_Text (Output_Object, "`");
 
-      when ARM_Output.Right_Quote =>
-         Ordinary_Text (Output_Object, "'");
+         when ARM_Output.Right_Quote =>
+            Ordinary_Text (Output_Object, "'");
 
-      when ARM_Output.Left_Double_Quote =>
-         Ordinary_Text (Output_Object, """");
+         when ARM_Output.Left_Double_Quote =>
+            Ordinary_Text (Output_Object, """");
 
-      when ARM_Output.Right_Double_Quote =>
-         Ordinary_Text (Output_Object, """");
+         when ARM_Output.Right_Double_Quote =>
+            Ordinary_Text (Output_Object, """");
 
-      when ARM_Output.Small_Dotless_I =>
-         Ordinary_Text (Output_Object, "i");
+         when ARM_Output.Small_Dotless_I =>
+            Ordinary_Text (Output_Object, "i");
 
-      when ARM_Output.Capital_Dotted_I =>
-         Ordinary_Text (Output_Object, "I");
+         when ARM_Output.Capital_Dotted_I =>
+            Ordinary_Text (Output_Object, "I");
       end case;
    end Special_Character;
 
    procedure Start_Paragraph
-     (Output_Object  : in out Texinfo_Output_Type;
-      Style          : in     ARM_Output.Paragraph_Style_Type;
-      Indent         : in     ARM_Output.Paragraph_Indent_Type;
-      Number         : in     String;
-      No_Prefix      : in     Boolean                       := False;
-      Tab_Stops      : in     ARM_Output.Tab_Info           := ARM_Output.NO_TABS;
-      No_Breaks      : in     Boolean                       := False;
-      Keep_with_Next : in     Boolean                       := False;
-      Space_After    : in     ARM_Output.Space_After_Type   := ARM_Output.Normal;
-      Justification  : in     ARM_Output.Justification_Type := ARM_Output.Default)
+     (Output_Object : in out Texinfo_Output_Type;
+      Style         : in     ARM_Output.Paragraph_Style_Type;
+      Indent        : in ARM_Output.Paragraph_Indent_Type; Number : in String;
+      No_Prefix     : in     Boolean                       := False;
+      Tab_Stops     : in     ARM_Output.Tab_Info := ARM_Output.NO_TABS;
+      No_Breaks : in Boolean := False; Keep_with_Next : in Boolean := False;
+      Space_After   : in     ARM_Output.Space_After_Type := ARM_Output.Normal;
+      Justification : in ARM_Output.Justification_Type := ARM_Output.Default)
    is
       pragma Unreferenced (Justification);
       pragma Unreferenced (Space_After);
@@ -1579,92 +1527,76 @@ package body ARM_Texinfo is
       --  output characters; let's see if we really need it.
 
       case Output_Object.State is
-      when Contents =>
-         null;
-
-      when Normal =>
-         if Number'Length > 0 then
-            Put_Line (Output_Object.File, Number & " @*");
-         end if;
-
-         Output_Object.In_Paragraph := True;
-         Output_Object.Style        := Style;
-         Output_Object.Indent       := Indent;
-
-         case Style is
-         when Normal |
-           Wide_Above |
-           Small |
-           Small_Wide_Above |
-           Header |
-           Small_Header |
-           Syntax_Summary  =>
-
-            Handle_Indent (Output_Object, "@quotation");
-
-         when Index |
-           Title =>
-
+         when Contents =>
             null;
 
-         when Examples |
-           Small_Examples |
-           Swiss_Examples |
-           Small_Swiss_Examples =>
-
-            Handle_Indent (Output_Object, "@example");
-
-         when Bulleted |
-           Small_Bulleted =>
-
-            Handle_Indent (Output_Object, "@itemize @bullet");
-            if not No_Prefix then
-               Put (Output_Object.File, "@item ");
+         when Normal =>
+            if Number'Length > 0 then
+               Put_Line (Output_Object.File, Number & " @*");
             end if;
 
-         when Nested_Bulleted |
-           Small_Nested_Bulleted =>
+            Output_Object.In_Paragraph := True;
+            Output_Object.Style        := Style;
+            Output_Object.Indent       := Indent;
 
-            Handle_Indent (Output_Object, "@itemize @bullet", Extra_Indent => 1);
-            if not No_Prefix then
-               Put (Output_Object.File, "@item ");
+            case Style is
+               when Normal | Wide_Above | Small | Small_Wide_Above | Header |
+                 Small_Header | Syntax_Summary =>
+
+                  Handle_Indent (Output_Object, "@quotation");
+
+               when Index | Title =>
+
+                  null;
+
+               when Examples | Small_Examples | Swiss_Examples |
+                 Small_Swiss_Examples =>
+
+                  Handle_Indent (Output_Object, "@example");
+
+               when Bulleted | Small_Bulleted =>
+
+                  Handle_Indent (Output_Object, "@itemize @bullet");
+                  if not No_Prefix then
+                     Put (Output_Object.File, "@item ");
+                  end if;
+
+               when Nested_Bulleted | Small_Nested_Bulleted =>
+
+                  Handle_Indent
+                    (Output_Object, "@itemize @bullet", Extra_Indent => 1);
+                  if not No_Prefix then
+                     Put (Output_Object.File, "@item ");
+                  end if;
+
+               when Enumerated | Small_Enumerated =>
+
+                  Handle_Indent (Output_Object, "@itemize @w{}");
+                  Put (Output_Object.File, "@item ");
+
+               when Giant_Hanging | Small_Giant_Hanging | Wide_Hanging |
+                 Small_Wide_Hanging | Medium_Hanging | Small_Medium_Hanging |
+                 Narrow_Hanging | Small_Narrow_Hanging | Hanging_in_Bulleted |
+                 Small_Hanging_in_Bulleted =>
+
+                  if No_Prefix then
+                     --  Still in hanging part
+                     Handle_Indent (Output_Object, "@quotation");
+                     Output_Object.End_Hang_Seen := True;
+                  else
+                     Output_Object.End_Hang_Seen := False;
+                  end if;
+
+            end case;
+
+         when Index_Start | Index | Title | Multi_Column | Table_Header =>
+            if Number'Length > 0 then
+               Unexpected_State (Output_Object);
             end if;
 
-         when Enumerated |
-           Small_Enumerated =>
-
-            Handle_Indent (Output_Object, "@itemize @w{}");
-            Put (Output_Object.File, "@item ");
-
-         when Giant_Hanging |
-           Small_Giant_Hanging |
-	   Wide_Hanging |
-           Small_Wide_Hanging |
-           Medium_Hanging |
-           Small_Medium_Hanging |
-           Narrow_Hanging |
-           Small_Narrow_Hanging |
-           Hanging_in_Bulleted |
-           Small_Hanging_in_Bulleted =>
-
-            if No_Prefix then
-               --  Still in hanging part
-               Handle_Indent (Output_Object, "@quotation");
-               Output_Object.End_Hang_Seen := True;
-            else
-               Output_Object.End_Hang_Seen := False;
-            end if;
-
-         end case;
-
-      when Index_Start | Index | Title | Multi_Column | Table_Header =>
-         if Number'Length > 0 then
-            Unexpected_State (Output_Object);
-         end if;
-
-         Output_Object.In_Paragraph := True;
-         Output_Object.Style        := Style;
-         Output_Object.Indent       := Indent;
+            Output_Object.In_Paragraph := True;
+            Output_Object.Style        := Style;
+            Output_Object.Indent       := Indent;
 
       end case;
 
@@ -1676,8 +1608,7 @@ package body ARM_Texinfo is
       First_Column_Width : in     ARM_Output.Column_Count;
       Last_Column_Width  : in     ARM_Output.Column_Count;
       Alignment          : in     ARM_Output.Column_Text_Alignment;
-      No_Page_Break      : in     Boolean;
-      Has_Border         : in     Boolean;
+      No_Page_Break      : in     Boolean; Has_Border : in Boolean;
       Small_Text_Size    : in     Boolean;
       Header_Kind        : in     ARM_Output.Header_Kind_Type)
    is
@@ -1691,65 +1622,64 @@ package body ARM_Texinfo is
    begin
       Output_Object.Column_Count := Columns;
       case Header_Kind is
-      when Both_Caption_and_Header =>
-         New_Line (Output_Object.File);
-         --  Next text output will be the caption, which we don't
-         --  format in any special way (first example is F.3.2 (19)).
-         --  Then Table_Marker (End_Caption) is called, which will
-         --  start the actual table.
-
-      when Header_Only =>
-         --  Same as Table_Marker, End_Caption.
-         case Columns is
-         when 1 =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Table with 1 column");
-
-         when 2 =>
+         when Both_Caption_and_Header =>
             New_Line (Output_Object.File);
-            Put_Line (Output_Object.File, "@table @asis");
+            --  Next text output will be the caption, which we don't
+            --  format in any special way (first example is F.3.2 (19)).
+            --  Then Table_Marker (End_Caption) is called, which will
+            --  start the actual table.
 
-         when others =>
-            New_Line (Output_Object.File);
-            Put (Output_Object.File, "@multitable");
-            Output_Object.State          := Table_Header;
-            Output_Object.Current_Column := 1;
-            Output_Object.Current_Row    := 1;
-            Output_Object.Max_Row        := 0;
-            --  The next text output via Ordinary_Text or
-            --  Ordinary_Character is the table headers. We
-            --  capture them in Output_Object.Column_Text, and
-            --  use them to set the table column widths.
-         end case;
+         when Header_Only =>
+            --  Same as Table_Marker, End_Caption.
+            case Columns is
+               when 1 =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Table with 1 column");
 
-      when No_Headers =>
-         null;
+               when 2 =>
+                  New_Line (Output_Object.File);
+                  Put_Line (Output_Object.File, "@table @asis");
+
+               when others =>
+                  New_Line (Output_Object.File);
+                  Put (Output_Object.File, "@multitable");
+                  Output_Object.State          := Table_Header;
+                  Output_Object.Current_Column := 1;
+                  Output_Object.Current_Row    := 1;
+                  Output_Object.Max_Row        := 0;
+                  --  The next text output via Ordinary_Text or
+                  --  Ordinary_Character is the table headers. We
+                  --  capture them in Output_Object.Column_Text, and
+                  --  use them to set the table column widths.
+            end case;
+
+         when No_Headers =>
+            null;
 
       end case;
    end Start_Table;
 
-   procedure Tab (Output_Object : in out Texinfo_Output_Type)
-   is begin
+   procedure Tab (Output_Object : in out Texinfo_Output_Type) is
+   begin
       case Output_Object.State is
-      when Contents =>
-         null;
-
-      when Multi_Column | Table_Header =>
-         Ada.Exceptions.Raise_Exception
-           (ARM_Output.Not_Valid_Error'Identity,
-            "Tab in multi-column");
-
-      when Title =>
-         if Output_Object.Line_Empty then
+         when Contents =>
             null;
-         else
-            Put (Output_Object.File, "@w{ }");
-         end if;
 
-      when Normal | Index_Start | Index =>
-         --  Just three spaces for now, for indented trees
-         Put (Output_Object.File, "@w{   }");
+         when Multi_Column | Table_Header =>
+            Ada.Exceptions.Raise_Exception
+              (ARM_Output.Not_Valid_Error'Identity, "Tab in multi-column");
+
+         when Title =>
+            if Output_Object.Line_Empty then
+               null;
+            else
+               Put (Output_Object.File, "@w{ }");
+            end if;
+
+         when Normal | Index_Start | Index =>
+            --  Just three spaces for now, for indented trees
+            Put (Output_Object.File, "@w{   }");
 
       end case;
    end Tab;
@@ -1757,107 +1687,110 @@ package body ARM_Texinfo is
    procedure Table_Marker
      (Output_Object : in out Texinfo_Output_Type;
       Marker        : in     ARM_Output.Table_Marker_Type)
-   is begin
+   is
+   begin
       case Marker is
-      when ARM_Output.End_Caption =>
-         --  Start the actual table
-         case Output_Object.Column_Count is
-         when 1 =>
-            Ada.Exceptions.Raise_Exception
-              (ARM_Output.Not_Valid_Error'Identity,
-               "Table with 1 column");
-
-         when 2 =>
-            New_Line (Output_Object.File);
-            Put_Line (Output_Object.File, "@table @asis");
-
-         when others =>
-            New_Line (Output_Object.File);
-            Put (Output_Object.File, "@multitable");
-            Output_Object.State          := Table_Header;
-            Output_Object.Current_Column := 1;
-            Output_Object.Current_Row    := 1;
-            Output_Object.Max_Row        := 0;
-            --  The next text output via Ordinary_Text or
-            --  Ordinary_Character is the table headers. We
-            --  capture them in Output_Object.Column_Text, and
-            --  use them to set the table column widths.
-         end case;
-
-      when ARM_Output.End_Item =>
-         case Output_Object.State is
-         when Table_Header =>
-            Output_Object.Current_Column := Output_Object.Current_Column + 1;
-            Output_Object.Current_Row    := 1;
-
-         when Normal =>
+         when ARM_Output.End_Caption =>
+            --  Start the actual table
             case Output_Object.Column_Count is
-            when 2 =>
-               --  using @table
-               Put (Output_Object.File, ' ');
+               when 1 =>
+                  Ada.Exceptions.Raise_Exception
+                    (ARM_Output.Not_Valid_Error'Identity,
+                     "Table with 1 column");
 
-            when others =>
-               Put (Output_Object.File, " @tab ");
+               when 2 =>
+                  New_Line (Output_Object.File);
+                  Put_Line (Output_Object.File, "@table @asis");
+
+               when others =>
+                  New_Line (Output_Object.File);
+                  Put (Output_Object.File, "@multitable");
+                  Output_Object.State          := Table_Header;
+                  Output_Object.Current_Column := 1;
+                  Output_Object.Current_Row    := 1;
+                  Output_Object.Max_Row        := 0;
+                  --  The next text output via Ordinary_Text or
+                  --  Ordinary_Character is the table headers. We
+                  --  capture them in Output_Object.Column_Text, and
+                  --  use them to set the table column widths.
             end case;
 
-         when Multi_Column | Contents | Title | Index_Start | Index =>
-            Unexpected_State (Output_Object);
-         end case;
+         when ARM_Output.End_Item =>
+            case Output_Object.State is
+               when Table_Header =>
+                  Output_Object.Current_Column :=
+                    Output_Object.Current_Column + 1;
+                  Output_Object.Current_Row := 1;
 
-      when ARM_Output.End_Header =>
-         case Output_Object.State is
-         when Table_Header =>
-            Output_Object.State := Normal;
+               when Normal =>
+                  case Output_Object.Column_Count is
+                     when 2 =>
+                        --  using @table
+                        Put (Output_Object.File, ' ');
 
-            for I in 1 .. Output_Object.Column_Count loop
-               Put
-                 (Output_Object.File,
-                  " {" &
-                    Output_Object.Column_Text (I).Text (1 .. Output_Object.Column_Text (I).Length) &
-                    "}");
-            end loop;
+                     when others =>
+                        Put (Output_Object.File, " @tab ");
+                  end case;
 
-            New_Line (Output_Object.File);
+               when Multi_Column | Contents | Title | Index_Start | Index =>
+                  Unexpected_State (Output_Object);
+            end case;
 
-            Put (Output_Object.File, "@item ");
+         when ARM_Output.End_Header =>
+            case Output_Object.State is
+               when Table_Header =>
+                  Output_Object.State := Normal;
 
-            Pad_Columns (Output_Object);
-            Output_Columns (Output_Object);
+                  for I in 1 .. Output_Object.Column_Count loop
+                     Put
+                       (Output_Object.File,
+                        " {" &
+                        Output_Object.Column_Text (I).Text
+                          (1 .. Output_Object.Column_Text (I).Length) &
+                        "}");
+                  end loop;
+
+                  New_Line (Output_Object.File);
+
+                  Put (Output_Object.File, "@item ");
+
+                  Pad_Columns (Output_Object);
+                  Output_Columns (Output_Object);
+                  New_Line (Output_Object.File);
+                  Put (Output_Object.File, "@item ");
+                  Output_Object.Current_Column := 1;
+
+               when Normal =>
+                  --  A two-column table; header has been output
+                  null;
+
+               when Contents | Multi_Column | Title | Index_Start | Index =>
+                  Unexpected_State (Output_Object);
+            end case;
+
+         when ARM_Output.End_Row | ARM_Output.End_Row_Next_Is_Last =>
             New_Line (Output_Object.File);
             Put (Output_Object.File, "@item ");
             Output_Object.Current_Column := 1;
 
-         when Normal =>
-            --  A two-column table; header has been output
-            null;
+         when ARM_Output.End_Table =>
+            case Output_Object.Column_Count is
+               when 2 =>
+                  New_Line (Output_Object.File);
+                  Put_Line (Output_Object.File, "@end table");
 
-         when Contents | Multi_Column | Title | Index_Start | Index =>
-            Unexpected_State (Output_Object);
-         end case;
+               when others =>
+                  Put_Line (Output_Object.File, "@end multitable");
 
-      when ARM_Output.End_Row | ARM_Output.End_Row_Next_Is_Last =>
-         New_Line (Output_Object.File);
-         Put (Output_Object.File, "@item ");
-         Output_Object.Current_Column := 1;
-
-      when ARM_Output.End_Table =>
-         case Output_Object.Column_Count is
-         when 2 =>
-            New_Line (Output_Object.File);
-            Put_Line (Output_Object.File, "@end table");
-
-         when others =>
-            Put_Line (Output_Object.File, "@end multitable");
-
-         end case;
+            end case;
 
       end case;
    end Table_Marker;
 
    procedure TOC_Marker
-     (Output_Object : in out Texinfo_Output_Type;
-      For_Start     : in     Boolean)
-   is begin
+     (Output_Object : in out Texinfo_Output_Type; For_Start : in Boolean)
+   is
+   begin
       --  We use menus, not @contents (since makeinfo ignores
       --  @contents in info mode). The menus (including the top menu)
       --  are generated from data stored in ARM_Contents during the
@@ -1874,18 +1807,21 @@ package body ARM_Texinfo is
    procedure Unicode_Character
      (Output_Object : in out Texinfo_Output_Type;
       Char          : in     ARM_Output.Unicode_Type)
-   is begin
+   is
+   begin
       --  Used in section 2.3 Identifiers examples, 2.5 character
       --  literals examples, 2.6 string literals examples, 3.3.1
       --  Object Declarations examples, 4.4 Expressions examples
-      Put_Line (Output_Object.File, "[Unicode" & ARM_Output.Unicode_Type'Image (Char) & "]");
+      Put_Line
+        (Output_Object.File,
+         "[Unicode" & ARM_Output.Unicode_Type'Image (Char) & "]");
    end Unicode_Character;
 
    procedure URL_Link
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       URL           : in     String)
-   is begin
+   is
+   begin
       Put (Output_Object.File, "@uref{" & URL & "," & Text & "}");
    end URL_Link;
 

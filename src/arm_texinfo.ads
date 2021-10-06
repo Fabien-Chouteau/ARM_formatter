@@ -35,22 +35,20 @@ package ARM_Texinfo is
    -- Ancient  - S L - Developed package as add-on to Arm_Form.
    -- 10/19/11 - RLB - Integrated outside-developed package into Arm_Form.
    --                  Commented out/replaced Ada 2005 features (this is
-   --		       Ada 95 code). Updated for a few other changes since
-   --		       the last update.
+   --                  Ada 95 code). Updated for a few other changes since
+   --                  the last update.
    -- 10/25/11 - RLB - Added old insertion version to Revised_Clause_Header.
    --  4/ 1/12 - S L - Various revisions.
    --  8/31/12 - RLB - Added Output_Path.
    -- 11/26/12 - RLB - Added subdivision names to Clause_Header and
-   --		       Revised_Clause_Header.
+   --                  Revised_Clause_Header.
 
    type Texinfo_Output_Type is new ARM_Output.Output_Type with private;
 
    --not overriding - Ada 2005-only
    procedure Create
-     (Output_Object : in out Texinfo_Output_Type;
-      File_Prefix   : in     String;
-      Output_Path   : in     String;
-      Title         : in     String);
+     (Output_Object : in out Texinfo_Output_Type; File_Prefix : in String;
+      Output_Path   : in     String; Title : in String);
    --  Create an Output_Object for a document.
 
    -- overriding - Ada 2005-only
@@ -58,8 +56,7 @@ package ARM_Texinfo is
 
    -- overriding
    procedure Section
-     (Output_Object : in out Texinfo_Output_Type;
-      Section_Title : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Section_Title : in String;
       Section_Name  : in     String);
 
    -- overriding
@@ -69,60 +66,55 @@ package ARM_Texinfo is
 
    -- overriding
    procedure Start_Paragraph
-     (Output_Object  : in out Texinfo_Output_Type;
-      Style          : in     ARM_Output.Paragraph_Style_Type;
-      Indent         : in     ARM_Output.Paragraph_Indent_Type;
-      Number         : in     String;
-      No_Prefix      : in     Boolean                       := False;
-      Tab_Stops      : in     ARM_Output.Tab_Info           := ARM_Output.NO_TABS;
-      No_Breaks      : in     Boolean                       := False;
-      Keep_with_Next : in     Boolean                       := False;
-      Space_After    : in     ARM_Output.Space_After_Type   := ARM_Output.Normal;
-      Justification  : in     ARM_Output.Justification_Type := ARM_Output.Default);
+     (Output_Object : in out Texinfo_Output_Type;
+      Style         : in     ARM_Output.Paragraph_Style_Type;
+      Indent        : in ARM_Output.Paragraph_Indent_Type; Number : in String;
+      No_Prefix     : in     Boolean                       := False;
+      Tab_Stops     : in     ARM_Output.Tab_Info := ARM_Output.NO_TABS;
+      No_Breaks : in Boolean := False; Keep_with_Next : in Boolean := False;
+      Space_After   : in     ARM_Output.Space_After_Type := ARM_Output.Normal;
+      Justification : in ARM_Output.Justification_Type := ARM_Output.Default);
 
    -- overriding
    procedure End_Paragraph (Output_Object : in out Texinfo_Output_Type);
 
    -- overriding
    procedure Category_Header
-     (Output_Object : in out Texinfo_Output_Type;
-      Header_Text   :        String);
+     (Output_Object : in out Texinfo_Output_Type; Header_Text : String);
 
    -- overriding
    procedure Clause_Header
-     (Output_Object : in out Texinfo_Output_Type;
-      Header_Text   : in     String;
-      Level         : in     ARM_Contents.Level_Type;
-      Clause_Number : in     String;
-      Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
-      No_Page_Break : in     Boolean                 := False);
+     (Output_Object : in out Texinfo_Output_Type; Header_Text : in String;
+      Level : in     ARM_Contents.Level_Type; Clause_Number : in String;
+      Top_Level_Subdivision_Name : in     ARM_Output
+        .Top_Level_Subdivision_Name_Kind;
+      No_Page_Break : in Boolean := False);
 
    -- overriding
    procedure Revised_Clause_Header
-     (Output_Object   : in out Texinfo_Output_Type;
-      New_Header_Text : in     String;
-      Old_Header_Text : in     String;
-      Level           : in     ARM_Contents.Level_Type;
-      Clause_Number   : in     String;
-      Version         : in     ARM_Contents.Change_Version_Type;
-      Old_Version     : in     ARM_Contents.Change_Version_Type;
-      Top_Level_Subdivision_Name : in ARM_Output.Top_Level_Subdivision_Name_Kind;
-      No_Page_Break   : in     Boolean                          := False);
+     (Output_Object : in out Texinfo_Output_Type; New_Header_Text : in String;
+      Old_Header_Text : in     String; Level : in ARM_Contents.Level_Type;
+      Clause_Number : in String; Version : in ARM_Contents.Change_Version_Type;
+      Old_Version                : in     ARM_Contents.Change_Version_Type;
+      Top_Level_Subdivision_Name : in     ARM_Output
+        .Top_Level_Subdivision_Name_Kind;
+      No_Page_Break : in Boolean := False);
 
    -- overriding
-   procedure TOC_Marker (Output_Object : in out Texinfo_Output_Type;
-                         For_Start : in Boolean);
+   procedure TOC_Marker
+     (Output_Object : in out Texinfo_Output_Type; For_Start : in Boolean);
 
    -- overriding
-   procedure New_Page (Output_Object : in out Texinfo_Output_Type;
-                       Kind : ARM_Output.Page_Kind_Type := ARM_Output.Any_Page);
+   procedure New_Page
+     (Output_Object : in out Texinfo_Output_Type;
+      Kind          :        ARM_Output.Page_Kind_Type := ARM_Output.Any_Page);
 
    -- overriding
    procedure New_Column (Output_Object : in out Texinfo_Output_Type);
 
    -- overriding
-   procedure Separator_Line (Output_Object : in out Texinfo_Output_Type;
-                             Is_Thin : Boolean := True);
+   procedure Separator_Line
+     (Output_Object : in out Texinfo_Output_Type; Is_Thin : Boolean := True);
 
    -- overriding
    procedure Start_Table
@@ -131,22 +123,22 @@ package ARM_Texinfo is
       First_Column_Width : in     ARM_Output.Column_Count;
       Last_Column_Width  : in     ARM_Output.Column_Count;
       Alignment          : in     ARM_Output.Column_Text_Alignment;
-      No_Page_Break      : in     Boolean;
-      Has_Border         : in     Boolean;
+      No_Page_Break      : in     Boolean; Has_Border : in Boolean;
       Small_Text_Size    : in     Boolean;
       Header_Kind        : in     ARM_Output.Header_Kind_Type);
 
    -- overriding
-   procedure Table_Marker (Output_Object : in out Texinfo_Output_Type;
-                           Marker : in ARM_Output.Table_Marker_Type);
+   procedure Table_Marker
+     (Output_Object : in out Texinfo_Output_Type;
+      Marker        : in     ARM_Output.Table_Marker_Type);
 
    -- overriding
-   procedure Ordinary_Text (Output_Object : in out Texinfo_Output_Type;
-                            Text : in String);
+   procedure Ordinary_Text
+     (Output_Object : in out Texinfo_Output_Type; Text : in String);
 
    -- overriding
-   procedure Ordinary_Character (Output_Object : in out Texinfo_Output_Type;
-                                 Char : in Character);
+   procedure Ordinary_Character
+     (Output_Object : in out Texinfo_Output_Type; Char : in Character);
 
    -- overriding
    procedure Hard_Space (Output_Object : in out Texinfo_Output_Type);
@@ -155,8 +147,9 @@ package ARM_Texinfo is
    procedure Line_Break (Output_Object : in out Texinfo_Output_Type);
 
    -- overriding
-   procedure Index_Line_Break (Output_Object : in out Texinfo_Output_Type;
-                               Clear_Keep_with_Next : in Boolean);
+   procedure Index_Line_Break
+     (Output_Object        : in out Texinfo_Output_Type;
+      Clear_Keep_with_Next : in     Boolean);
 
    -- overriding
    procedure Soft_Line_Break (Output_Object : in out Texinfo_Output_Type);
@@ -186,73 +179,59 @@ package ARM_Texinfo is
       Format        : in     ARM_Output.Format_Type);
 
    -- overriding
-   procedure Clause_Reference (Output_Object : in out Texinfo_Output_Type;
-                               Text : in String;
-                               Clause_Number : in String);
-
-   -- overriding
-   procedure Index_Target
-     (Output_Object : in out Texinfo_Output_Type;
-      Index_Key     : in     Natural);
-
-   -- overriding
-   procedure Index_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
-      Index_Key     : in     Natural;
+   procedure Clause_Reference
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       Clause_Number : in     String);
 
    -- overriding
+   procedure Index_Target
+     (Output_Object : in out Texinfo_Output_Type; Index_Key : in Natural);
+
+   -- overriding
+   procedure Index_Reference
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
+      Index_Key     : in     Natural; Clause_Number : in String);
+
+   -- overriding
    procedure DR_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       DR_Number     : in     String);
 
    -- overriding
    procedure AI_Reference
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       AI_Number     : in     String);
 
    -- overriding
    procedure Local_Target
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       Target        : in     String);
 
    -- overriding
    procedure Local_Link
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
-      Target        : in     String;
-      Clause_Number : in     String);
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
+      Target        : in     String; Clause_Number : in String);
 
    -- overriding
    procedure Local_Link_Start
-     (Output_Object : in out Texinfo_Output_Type;
-      Target        : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Target : in String;
       Clause_Number : in     String);
 
    -- overriding
    procedure Local_Link_End
-     (Output_Object : in out Texinfo_Output_Type;
-      Target        : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Target : in String;
       Clause_Number : in     String);
 
    -- overriding
    procedure URL_Link
-     (Output_Object : in out Texinfo_Output_Type;
-      Text          : in     String;
+     (Output_Object : in out Texinfo_Output_Type; Text : in String;
       URL           : in     String);
 
    -- overriding
    procedure Picture
-     (Output_Object : in out Texinfo_Output_Type;
-      Name          : in     String;
-      Descr         : in     String;
-      Alignment     : in     ARM_Output.Picture_Alignment;
-      Height, Width : in     Natural;
-      Border        : in     ARM_Output.Border_Kind);
+     (Output_Object : in out Texinfo_Output_Type; Name : in String;
+      Descr         : in String; Alignment : in ARM_Output.Picture_Alignment;
+      Height, Width : in     Natural; Border : in ARM_Output.Border_Kind);
 
 private
 
@@ -260,17 +239,19 @@ private
    type Column_Text_Item_Type;
    type Column_Text_Ptr is access Column_Text_Item_Type;
    type Column_Text_Item_Type is record
-      Text     : String (1 .. 80);
-      Length   : Natural;
-      Row      : Natural; -- Which row in the column.
-      Next     : Column_Text_Ptr;
+      Text   : String (1 .. 80);
+      Length : Natural;
+      Row    : Natural; -- Which row in the column.
+      Next   : Column_Text_Ptr;
    end record;
    type Column_Text_Ptrs_Type is array (Column_Index_Type) of Column_Text_Ptr;
    type Column_Widths_Type is array (Column_Index_Type) of Natural;
 
-   procedure Free is new Ada.Unchecked_Deallocation (Column_Text_Item_Type, Column_Text_Ptr);
+   procedure Free is new Ada.Unchecked_Deallocation
+     (Column_Text_Item_Type, Column_Text_Ptr);
 
-   type State_Type is (Title, Contents, Table_Header, Multi_Column, Normal, Index_Start, Index);
+   type State_Type is
+     (Title, Contents, Table_Header, Multi_Column, Normal, Index_Start, Index);
 
    type Texinfo_Output_Type is new ARM_Output.Output_Type with record
       File     : Ada.Text_IO.File_Type;
@@ -283,21 +264,22 @@ private
       End_Hang_Seen : Boolean;
 
       --  Detecting end of title page
-      Line_Empty      : Boolean := False; --  True if current line contains only whitespace.
+      Line_Empty : Boolean :=
+        False; --  True if current line contains only whitespace.
       First_Word      : String (1 .. 80);
       First_Word_Last : Natural;
 
       --  Building menus
       Menu_Section : ARM_Contents.Section_Number_Type := 0;
-      Menu_Clause  : Natural := 0;
+      Menu_Clause  : Natural                          := 0;
 
       --  Table and Multi-Column format
-      Column_Count    : ARM_Output.Column_Count;
-      Current_Column  : Natural;
-      Current_Row     : Natural;
-      Column_Text     : Column_Text_Ptrs_Type := (others => null);
-      Column_Widths   : Column_Widths_Type;
-      Max_Row         : Natural := 0;
+      Column_Count   : ARM_Output.Column_Count;
+      Current_Column : Natural;
+      Current_Row    : Natural;
+      Column_Text    : Column_Text_Ptrs_Type := (others => null);
+      Column_Widths  : Column_Widths_Type;
+      Max_Row        : Natural               := 0;
    end record;
 
 end ARM_Texinfo;
