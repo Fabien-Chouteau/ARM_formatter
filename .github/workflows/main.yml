@@ -16,5 +16,7 @@ jobs:
       - uses: alire-project/setup-alire@v1
         with:
           toolchain: gprbuild${{ matrix.gprbuild_version }} gnat_native${{ matrix.gnat_version }} --disable-assistant
-      - run: cd tool && alr build
-      - run: cd src && mkdir output && ../tool/bin/arm_formatter RM.MSM HTML
+
+      - run: alr build
+
+      - run: cd Ada_Reference_Manual && mkdir output && ../bin/arm_formatter RM.MSM HTML
